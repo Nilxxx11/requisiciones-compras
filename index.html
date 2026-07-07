@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Requisiciones de Compras</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --info: #0891b2;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --card-shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+            --card-shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f1f5f9;
+            color: #334155;
+            min-height: 100vh;
+        }
+
+        /* Login Screen */
+        #loginScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #0891b2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #loginScreen::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            animation: rotate 60s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .login-card {
+            background: rgba(255,255,255,.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,.25);
+            position: relative;
+            z-index: 1;
+            animation: slideUp .6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-card .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--info));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+            color: white;
+        }
+
+        .login-card h2 {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .login-card .subtitle {
+            color: var(--secondary);
+            margin-bottom: 30px;
+            font-size: .9rem;
+        }
+
+        .form-floating > .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            height: 52px;
+            transition: all .2s;
+        }
+
+        .form-floating > .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+        }
+
+        .form-floating > label {
+            color: var(--secondary);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: .3px;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 7px 14px -3px rgba(37,99,235,.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width .6s, height .6s;
+        }
+
+        .btn-login:active::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        /* App Layout */
+        #appScreen { display: none; min-height: 100vh; }
+
+        .navbar-app {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            box-shadow: 0 1px 3px rgba(0,0,0,.05);
+        }
+
+        .navbar-app .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-app .brand-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: block;
+        }
+
+        .navbar-app .brand h5 {
+            margin: 0;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .navbar-app .brand span {
+            font-size: .75rem;
+            color: var(--secondary);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: .85rem;
+            color: white;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: .85rem;
+        }
+
+        .user-role {
+            font-size: .75rem;
+            color: var(--secondary);
+        }
+
+        .btn-logout {
+            background: #fee2e2;
+            color: var(--danger);
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: .8rem;
+            transition: all .2s;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .app-content {
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Dashboard Cards */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            transition: all .3s;
+            border: 1px solid #f1f5f9;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--card-shadow-lg);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .stat-card.total::after { background: var(--primary); }
+        .stat-card.pendiente::after { background: var(--warning); }
+        .stat-card.revision::after { background: var(--info); }
+        .stat-card.aprobado::after { background: var(--success); }
+        .stat-card.entregado::after { background: #8b5cf6; }
+        .stat-card.retrasado::after { background: var(--danger); }
+
+        .stat-card .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .stat-card.total .icon { background: #eff6ff; color: var(--primary); }
+        .stat-card.pendiente .icon { background: #fef3c7; color: #d97706; }
+        .stat-card.revision .icon { background: #ecfeff; color: #0e7490; }
+        .stat-card.aprobado .icon { background: #dcfce7; color: var(--success); }
+        .stat-card.entregado .icon { background: #ede9fe; color: #7c3aed; }
+        .stat-card.retrasado .icon { background: #fee2e2; color: var(--danger); }
+
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1;
+            margin: 12px 0 4px;
+        }
+
+        .stat-card.total .number { color: var(--primary); }
+        .stat-card.pendiente .number { color: #d97706; }
+        .stat-card.revision .number { color: #0e7490; }
+        .stat-card.aprobado .number { color: var(--success); }
+        .stat-card.entregado .number { color: #7c3aed; }
+        .stat-card.retrasado .number { color: var(--danger); }
+
+        .stat-card .label {
+            font-size: .8rem;
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        /* Table Styles */
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #f1f5f9;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .table-header h5 {
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group .form-select,
+        .filter-group .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: .85rem;
+            height: 40px;
+            min-width: 140px;
+        }
+
+        .filter-group .form-select:focus,
+        .filter-group .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table-custom {
+            margin: 0;
+            font-size: .85rem;
+        }
+
+        .table-custom thead th {
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            font-weight: 600;
+            color: var(--secondary);
+            padding: 12px 16px;
+            white-space: nowrap;
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .table-custom tbody td {
+            padding: 12px 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .table-custom tbody tr {
+            transition: background .15s;
+        }
+
+        .table-custom tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        /* Status Badges */
+        .badge-status {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: .75rem;
+            letter-spacing: .3px;
+            white-space: nowrap;
+        }
+
+        .badge-pendiente { background: #fef3c7; color: #92400e; }
+        .badge-revision { background: #ecfeff; color: #0e7490; }
+        .badge-aprobado { background: #dcfce7; color: #166534; }
+        .badge-rechazado { background: #fee2e2; color: #991b1b; }
+        .badge-entregado { background: #ede9fe; color: #5b21b6; }
+        .badge-retrasado { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+
+        /* Action Buttons */
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .85rem;
+            transition: all .2s;
+            cursor: pointer;
+        }
+
+        .btn-action.edit { background: #eff6ff; color: var(--primary); }
+        .btn-action.edit:hover { background: var(--primary); color: white; }
+        .btn-action.delete { background: #fee2e2; color: var(--danger); }
+        .btn-action.delete:hover { background: var(--danger); color: white; }
+        .btn-action.view { background: #f0fdf4; color: var(--success); }
+        .btn-action.view:hover { background: var(--success); color: white; }
+        .btn-action.novelty { background: #fef3c7; color: #d97706; }
+        .btn-action.novelty:hover { background: #d97706; color: white; }
+
+        .action-group { display: flex; gap: 4px; }
+
+        /* Status Select */
+        .select-status {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            background: white;
+        }
+
+        .select-status:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(37,99,235,.15);
+        }
+
+        /* Delay indicator */
+        .delay-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--danger);
+            font-size: .75rem;
+            font-weight: 600;
+        }
+
+        /* Modal Styles */
+        .modal-content {
+            border: none;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 20px 24px;
+        }
+
+        .modal-title {
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #f1f5f9;
+            padding: 16px 24px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: .85rem;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            transition: all .2s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 600;
+            color: white;
+            transition: all .3s;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37,99,235,.3);
+            color: white;
+        }
+
+        .btn-secondary-custom {
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 600;
+            color: var(--secondary);
+            transition: all .2s;
+        }
+
+        .btn-secondary-custom:hover {
+            background: #e2e8f0;
+            color: var(--dark);
+        }
+
+        /* Novedades Timeline */
+        .novedad-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .novedad-item:last-child { border-bottom: none; }
+
+        .novedad-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .75rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .novedad-content {
+            flex: 1;
+        }
+
+        .novedad-meta {
+            font-size: .78rem;
+            color: var(--secondary);
+            margin-bottom: 4px;
+        }
+
+        .novedad-msg {
+            font-size: .85rem;
+            color: var(--dark);
+            line-height: 1.5;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: .4;
+        }
+
+        .empty-state h5 {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        /* Toasts */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast-custom {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,.15);
+            border: none;
+            min-width: 300px;
+            animation: slideInRight .3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .toast-custom .toast-body {
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .toast-success { border-left: 4px solid var(--success); }
+        .toast-error { border-left: 4px solid var(--danger); }
+        .toast-info { border-left: 4px solid var(--info); }
+
+        /* Loading */
+        .spinner-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .spinner-custom {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-content { padding: 16px; }
+            .stat-card .number { font-size: 1.4rem; }
+            .table-header { flex-direction: column; align-items: flex-start; }
+            .filter-group { width: 100%; }
+            .filter-group .form-select,
+            .filter-group .form-control { min-width: auto; flex: 1; }
+            .user-info .user-name,
+            .user-info .user-role { display: none; }
+        }
+
+        /* Delayed row highlight */
+        tr.row-delayed td {
+            background: #fef2f2 !important;
+        }
+
+        /* Date input */
+        input[type="date"] {
+            cursor: pointer;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: .6;
+        }
+
+        /* Section title */
+        .section-title {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Novedades section in modal */
+        .novedades-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .novedades-section h6 {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .novedad-input-area {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .novedad-input-area textarea {
+            flex: 1;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            resize: none;
+            font-size: .85rem;
+            min-height: 60px;
+            transition: border-color .2s;
+        }
+
+        .novedad-input-area textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .novedad-input-area button {
+            align-self: flex-end;
+        }
+
+        /* Rechazado row */
+        tr.row-rechazado td {
+            opacity: .65;
+        }
+
+        /* Pagination hint */
+        .table-info {
+            padding: 12px 24px;
+            background: #f8fafc;
+            font-size: .8rem;
+            color: var(--secondary);
+            border-top: 1px solid #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOADING SPINNER -->
+<div id="loadingSpinner" class="spinner-overlay" style="display:none;">
+    <div class="spinner-custom"></div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div id="loginScreen">
+    <div class="login-card">
+        <div class="logo">
+            <i class="bi bi-cart-check"></i>
+        </div>
+        <h2>Gesti&oacute;n de Compras</h2>
+        <p class="subtitle">Inicia sesi&oacute;n para administrar requisiciones</p>
+
+        <div id="loginError" class="alert alert-danger d-none" role="alert" style="border-radius:10px;font-size:.85rem;"></div>
+
+        <form id="loginForm" onsubmit="return false;">
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="loginEmail" placeholder="correo@empresa.com" required>
+                <label for="loginEmail"><i class="bi bi-envelope me-1"></i> Correo electr&oacute;nico</label>
+            </div>
+            <div class="form-floating mb-4">
+                <input type="password" class="form-control" id="loginPassword" placeholder="Contrase&ntilde;a" required>
+                <label for="loginPassword"><i class="bi bi-lock me-1"></i> Contrase&ntilde;a</label>
+            </div>
+            <button type="submit" class="btn btn-login btn-primary-custom w-100" id="btnLogin">
+                <span class="spinner-border spinner-border-sm d-none" id="loginSpinner"></span>
+                Iniciar Sesi&oacute;n
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ===================== APP SCREEN ===================== -->
+<div id="appScreen">
+
+    <!-- NAVBAR -->
+    <nav class="navbar-app">
+        <div class="brand">
+            <img src="logo.png" alt="Logo" class="brand-icon" style="object-fit:contain;">
+            <div>
+                <h5>Requisiciones</h5>
+                <span>Sistema de Gestión de Compras</span>
+            </div>
+        </div>
+        <div class="user-info">
+            <div>
+                <div class="user-name" id="userName"></div>
+                <div class="user-role" id="userRole"></div>
+            </div>
+            <div class="user-avatar" id="userAvatar"></div>
+            <button class="btn-logout" onclick="logout()">
+                <i class="bi bi-box-arrow-right me-1"></i> Salir
+            </button>
+        </div>
+    </nav>
+
+    <div class="app-content">
+
+        <!-- DASHBOARD (Solo Admin) -->
+        <div id="adminDashboard">
+            <div class="section-title"><i class="bi bi-speedometer2"></i> Panel de Control</div>
+            <div class="row g-3 mb-4" id="statsRow">
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-card total">
+                        <div class="icon"><i class="bi bi-collection"></i></div>
+                        <div class="number" id="statTotal">0</div>
+                        <div class="label">Total</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-card pendiente">
+                        <div class="icon"><i class="bi bi-clock"></i></div>
+                        <div class="number" id="statPendiente">0</div>
+                        <div class="label">Pendientes</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-card revision">
+                        <div class="icon"><i class="bi bi-eye"></i></div>
+                        <div class="number" id="statRevision">0</div>
+                        <div class="label">En Revisión</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-card aprobado">
+                        <div class="icon"><i class="bi bi-check-circle"></i></div>
+                        <div class="number" id="statAprobado">0</div>
+                        <div class="label">Aprobadas</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-card entregado">
+                        <div class="icon"><i class="bi bi-truck"></i></div>
+                        <div class="number" id="statEntregado">0</div>
+                        <div class="label">Entregadas</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-card retrasado">
+                        <div class="icon"><i class="bi bi-exclamation-triangle"></i></div>
+                        <div class="number" id="statRetrasado">0</div>
+                        <div class="label">Retrasadas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AREA CHIEF HEADER (No Admin) -->
+        <div id="chiefHeader" class="d-none">
+            <div class="section-title"><i class="bi bi-clipboard-data"></i> Mis Requisiciones</div>
+        </div>
+
+        <!-- TABLE CARD -->
+        <div class="table-card">
+            <div class="table-header">
+                <h5 id="tableTitle">Requisiciones</h5>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <div class="filter-group" id="adminFilters">
+                        <select class="form-select" id="filterArea">
+                            <option value="">Todas las áreas</option>
+                        </select>
+                        <select class="form-select" id="filterEstado">
+                            <option value="">Todos los estados</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="En Revisión">En Revisión</option>
+                            <option value="Aprobado">Aprobado</option>
+                            <option value="Rechazado">Rechazado</option>
+                            <option value="Entregado">Entregado</option>
+                        </select>
+                        <input type="date" class="form-control" id="filterFechaInicio" title="Fecha inicio">
+                        <input type="date" class="form-control" id="filterFechaFin" title="Fecha fin">
+                        <button class="btn btn-sm btn-secondary-custom" onclick="clearFilters()">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <button class="btn btn-primary-custom" onclick="openCreateModal()" id="btnCreate">
+                        <i class="bi bi-plus-lg me-1"></i> Nueva
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Área</th>
+                            <th>Solicitante</th>
+                            <th>Descripción</th>
+                            <th>Cant.</th>
+                            <th>F. Requerida</th>
+                            <th>F. Entrega Sol.</th>
+                            <th>F. Entrega Real</th>
+                            <th>Estado</th>
+                            <th>Nov.</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requisicionesBody">
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-info" id="tableInfo">Mostrando 0 requisiciones</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: CREATE/EDIT ===================== -->
+<div class="modal fade" id="reqModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reqModalTitle">Nueva Requisición</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reqForm" onsubmit="return false;">
+                    <input type="hidden" id="reqId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Área</label>
+                            <select class="form-select" id="reqArea" required>
+                                <option value="">Seleccionar área</option>
+                                <option value="Administración">Administración</option>
+                                <option value="Finanzas">Finanzas</option>
+                                <option value="Recursos Humanos">Recursos Humanos</option>
+                                <option value="Tecnología">Tecnología</option>
+                                <option value="Operaciones">Operaciones</option>
+                                <option value="Ventas">Ventas</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Logística">Logística</option>
+                                <option value="Legal">Legal</option>
+                                <option value="Producción">Producción</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Solicitante</label>
+                            <input type="text" class="form-control" id="reqSolicitante" readonly>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="reqDescripcion" rows="2" required
+                                placeholder="Describa el producto o servicio requerido..."></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" class="form-control" id="reqCantidad" min="1" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha de Requerimiento</label>
+                            <input type="date" class="form-control" id="reqFechaReq" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha de Entrega Solicitada</label>
+                            <input type="date" class="form-control" id="reqFechaEntrega" required>
+                        </div>
+                        <div class="col-md-6 d-none" id="fechaRealGroup">
+                            <label class="form-label">Fecha de Entrega Real</label>
+                            <input type="date" class="form-control" id="reqFechaReal">
+                        </div>
+                        <div class="col-md-6" id="estadoGroup">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="reqEstado">
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En Revisión">En Revisión</option>
+                                <option value="Aprobado">Aprobado</option>
+                                <option value="Rechazado">Rechazado</option>
+                                <option value="Entregado">Entregado</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary-custom" onclick="saveRequisicion()" id="btnSave">
+                    <i class="bi bi-check-lg me-1"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: NOVEDADES ===================== -->
+<div class="modal fade" id="novedadModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-chat-dots me-2"></i>Historial de Novedades</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="novedadesList" class="mb-3" style="max-height:300px;overflow-y:auto;"></div>
+                <div class="novedad-input-area">
+                    <textarea id="novedadMensaje" placeholder="Escriba un comentario..." rows="2"></textarea>
+                    <button class="btn btn-primary-custom btn-sm" onclick="addNovedad()">
+                        <i class="bi bi-send"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: DETAIL ===================== -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-file-text me-2"></i>Detalle de Requisición</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: CONFIRM DELETE ===================== -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-trash me-2 text-danger"></i>Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">¿Está seguro de eliminar la requisición <strong id="deleteReqRef"></strong>? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()" id="btnConfirmDelete">
+                    <i class="bi bi-trash me-1"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BOOTSTRAP JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ===================== FIREBASE ===================== -->
+<!-- Reemplaza los valores de configuración con los de tu proyecto Firebase -->
+<script>
+    // ============================================================
+    // CONFIGURACIÓN FIREBASE - REEMPLAZA CON TUS PROPIAS CREDENCIALES
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyBar_fR20zynp6oszQbGq4duLRuEDzZ8MQ",
+        authDomain: "requisiciones-compras-e0a1e.firebaseapp.com",
+        databaseURL: "https://requisiciones-compras-e0a1e-default-rtdb.firebaseio.com",
+        projectId: "requisiciones-compras-e0a1e",
+        storageBucket: "requisiciones-compras-e0a1e.firebasestorage.app",
+        messagingSenderId: "671133296623",
+        appId: "1:671133296623:web:358d07eff5fb72f1b2381a"
+    };
+</script>
+
+<!-- Firebase SDK compat (v9 via CDN) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+    // ============================================================
+    // INICIALIZACIÓN
+    // ============================================================
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // ============================================================
+    // ESTADO GLOBAL
+    // ============================================================
+    let currentUser = null;
+    let userProfile = null;
+    let allRequisiciones = [];
+    let currentEditId = null;
+    let currentNovedadId = null;
+    let currentDeleteId = null;
+    let requisicionesRef = null;
+    let reqListener = null;
+
+    // ============================================================
+    // UTILIDADES
+    // ============================================================
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const icons = { success: 'bi-check-circle-fill text-success', error: 'bi-x-circle-fill text-danger', info: 'bi-info-circle-fill text-info' };
+        const toast = document.createElement('div');
+        toast.className = `toast-custom toast-${type}`;
+        toast.innerHTML = `<div class="toast-body"><i class="bi ${icons[type] || icons.info}"></i> ${message}</div>`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100px)'; toast.style.transition = 'all .3s'; }, 3000);
+        setTimeout(() => toast.remove(), 3500);
+    }
+
+    function showLoading(show) {
+        document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function formatDateTime(ts) {
+        if (!ts) return '';
+        const d = new Date(ts);
+        return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function isDelayed(fechaEntregaSol, estado) {
+        if (estado === 'Entregado' || estado === 'Rechazado') return false;
+        if (!fechaEntregaSol) return false;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const entrega = new Date(fechaEntregaSol + 'T00:00:00');
+        return entrega < hoy;
+    }
+
+    function getBadgeClass(estado) {
+        const map = {
+            'Pendiente': 'badge-pendiente',
+            'En Revisión': 'badge-revision',
+            'Aprobado': 'badge-aprobado',
+            'Rechazado': 'badge-rechazado',
+            'Entregado': 'badge-entregado'
+        };
+        return map[estado] || 'badge-pendiente';
+    }
+
+    function getAvatarColor(name) {
+        const colors = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#0891b2', '#be185d', '#4338ca'];
+        let hash = 0;
+        for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return colors[Math.abs(hash) % colors.length];
+    }
+
+    function getInitials(name) {
+        return (name || '??').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    function escHtml(s) {
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+    }
+
+    // ============================================================
+    // AUTH
+    // ============================================================
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const pass = document.getElementById('loginPassword').value;
+        const errDiv = document.getElementById('loginError');
+        const spinner = document.getElementById('loginSpinner');
+        const btn = document.getElementById('btnLogin');
+
+        errDiv.classList.add('d-none');
+        spinner.classList.remove('d-none');
+        btn.disabled = true;
+
+        try {
+            await auth.signInWithEmailAndPassword(email, pass);
+        } catch (err) {
+            const msgs = {
+                'auth/user-not-found': 'No existe una cuenta con ese correo.',
+                'auth/wrong-password': 'Contraseña incorrecta.',
+                'auth/invalid-email': 'Correo electrónico inválido.',
+                'auth/too-many-requests': 'Demasiados intentos. Intente más tarde.',
+                'auth/invalid-credential': 'Credenciales inválidas.'
+            };
+            errDiv.textContent = msgs[err.code] || 'Error al iniciar sesión: ' + err.message;
+            errDiv.classList.remove('d-none');
+        } finally {
+            spinner.classList.add('d-none');
+            btn.disabled = false;
+        }
+    });
+
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            currentUser = user;
+            await loadUserProfile(user.uid);
+        } else {
+            currentUser = null;
+            userProfile = null;
+            detachListener();
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appScreen').style.display = 'none';
+        }
+    });
+
+    async function loadUserProfile(uid) {
+        showLoading(true);
+        try {
+            const snap = await db.ref('usuarios/' + uid).once('value');
+            if (snap.exists()) {
+                userProfile = snap.val();
+                userProfile.uid = uid;
+                initApp();
+            } else {
+                // Auto-registrar perfil básico si no existe
+                await db.ref('usuarios/' + uid).set({
+                    nombre: currentUser.email.split('@')[0],
+                    correo: currentUser.email,
+                    rol: 'jefe de área',
+                    area: 'Sin asignar',
+                    creado: Date.now()
+                });
+                userProfile = { uid, nombre: currentUser.email.split('@')[0], correo: currentUser.email, rol: 'jefe de área', area: 'Sin asignar' };
+                initApp();
+            }
+        } catch (e) {
+            showToast('Error al cargar perfil: ' + e.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function initApp() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+
+        const isAdmin = userProfile.rol === 'admin';
+        document.getElementById('adminDashboard').classList.toggle('d-none', !isAdmin);
+        document.getElementById('chiefHeader').classList.toggle('d-none', isAdmin);
+        document.getElementById('adminFilters').style.display = isAdmin ? 'flex' : 'none';
+        document.getElementById('tableTitle').textContent = isAdmin ? 'Todas las Requisiciones' : 'Mis Requisiciones';
+
+        // User info
+        document.getElementById('userName').textContent = userProfile.nombre || currentUser.email;
+        document.getElementById('userRole').textContent = userProfile.rol === 'admin' ? 'Administrador' : userProfile.area;
+        const avatar = document.getElementById('userAvatar');
+        avatar.textContent = getInitials(userProfile.nombre || currentUser.email);
+        avatar.style.background = getAvatarColor(userProfile.nombre || currentUser.email);
+
+        // Create button visibility
+        document.getElementById('btnCreate').classList.toggle('d-none', false);
+
+        // Load areas for filter
+        loadAreas();
+
+        // Subscribe to data
+        listenRequisiciones();
+    }
+
+    function logout() {
+        detachListener();
+        auth.signOut();
+    }
+
+    // ============================================================
+    // REALTIME LISTENER
+    // ============================================================
+    function listenRequisiciones() {
+        detachListener();
+        requisicionesRef = db.ref('requisiciones');
+        reqListener = requisicionesRef.on('value', (snap) => {
+            allRequisiciones = [];
+            snap.forEach(child => {
+                const val = child.val();
+                val.id = child.key;
+                allRequisiciones.push(val);
+            });
+            // Auto-detect delays
+            allRequisiciones.forEach(r => {
+                r.retrasado = isDelayed(r.fechaEntregaSolicitada, r.estado);
+            });
+            renderAll();
+        });
+    }
+
+    function detachListener() {
+        if (requisicionesRef && reqListener) {
+            requisicionesRef.off('value', reqListener);
+            reqListener = null;
+        }
+    }
+
+    // ============================================================
+    // RENDER
+    // ============================================================
+    function renderAll() {
+        const filtered = getFilteredRequisiciones();
+        renderStats();
+        renderTable(filtered);
+    }
+
+    function getFilteredRequisiciones() {
+        let data = [...allRequisiciones];
+
+        if (userProfile.rol !== 'admin') {
+            data = data.filter(r => r.solicitanteUid === currentUser.uid);
+        }
+
+        const area = document.getElementById('filterArea')?.value || '';
+        const estado = document.getElementById('filterEstado')?.value || '';
+        const fInicio = document.getElementById('filterFechaInicio')?.value || '';
+        const fFin = document.getElementById('filterFechaFin')?.value || '';
+
+        if (area) data = data.filter(r => r.area === area);
+        if (estado) data = data.filter(r => r.estado === estado);
+        if (fInicio) data = data.filter(r => r.fechaRequerimiento >= fInicio);
+        if (fFin) data = data.filter(r => r.fechaRequerimiento <= fFin);
+
+        // Sort by creation date desc
+        data.sort((a, b) => (b.creado || 0) - (a.creado || 0));
+        return data;
+    }
+
+    function renderStats() {
+        let data = allRequisiciones;
+        document.getElementById('statTotal').textContent = data.length;
+        document.getElementById('statPendiente').textContent = data.filter(r => r.estado === 'Pendiente').length;
+        document.getElementById('statRevision').textContent = data.filter(r => r.estado === 'En Revisión').length;
+        document.getElementById('statAprobado').textContent = data.filter(r => r.estado === 'Aprobado').length;
+        document.getElementById('statEntregado').textContent = data.filter(r => r.estado === 'Entregado').length;
+        document.getElementById('statRetrasado').textContent = data.filter(r => r.retrasado).length;
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('requisicionesBody');
+        const info = document.getElementById('tableInfo');
+
+        if (data.length === 0) {
+            tbody.innerHTML = `
+                <tr><td colspan="11">
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h5>Sin requisiciones</h5>
+                        <p>No se encontraron requisiciones con los filtros aplicados.</p>
+                    </div>
+                </td></tr>`;
+            info.textContent = 'Mostrando 0 requisiciones';
+            return;
+        }
+
+        const isAdmin = userProfile.rol === 'admin';
+        let html = '';
+
+        data.forEach((r, idx) => {
+            const delayed = r.retrasado;
+            const rowClass = delayed ? 'row-delayed' : (r.estado === 'Rechazado' ? 'row-rechazado' : '');
+            const novedadesCount = (r.novedades && Array.isArray(r.novedades)) ? r.novedades.length : 0;
+
+            // Status select for admin
+            let estadoHtml;
+            if (isAdmin) {
+                estadoHtml = `
+                    <select class="select-status" onchange="changeStatus('${r.id}', this.value)">
+                        <option value="Pendiente" ${r.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                        <option value="En Revisión" ${r.estado === 'En Revisión' ? 'selected' : ''}>En Revisión</option>
+                        <option value="Aprobado" ${r.estado === 'Aprobado' ? 'selected' : ''}>Aprobado</option>
+                        <option value="Rechazado" ${r.estado === 'Rechazado' ? 'selected' : ''}>Rechazado</option>
+                        <option value="Entregado" ${r.estado === 'Entregado' ? 'selected' : ''}>Entregado</option>
+                    </select>`;
+            } else {
+                let badge = `<span class="badge-status ${getBadgeClass(r.estado)}">${r.estado}</span>`;
+                if (delayed) badge += `<br><span class="delay-indicator"><i class="bi bi-exclamation-triangle"></i> Retrasado</span>`;
+                estadoHtml = badge;
+            }
+
+            const canEdit = isAdmin || r.estado === 'Pendiente';
+
+            html += `
+                <tr class="${rowClass}">
+                    <td class="fw-bold" style="color:var(--secondary)">${idx + 1}</td>
+                    <td><span class="fw-semibold">${escHtml(r.area || '')}</span></td>
+                    <td>${escHtml(r.solicitante || '')}</td>
+                    <td style="max-width:200px;">
+                        <span class="d-inline-block text-truncate" style="max-width:200px;" title="${escHtml(r.descripcion || '')}">${escHtml(r.descripcion || '')}</span>
+                    </td>
+                    <td class="text-center">${r.cantidad || 0}</td>
+                    <td>${formatDate(r.fechaRequerimiento)}</td>
+                    <td>${formatDate(r.fechaEntregaSolicitada)}${delayed ? '<br><span class="delay-indicator"><i class="bi bi-clock-history"></i></span>' : ''}</td>
+                    <td>${formatDate(r.fechaEntregaReal)}</td>
+                    <td>${estadoHtml}</td>
+                    <td class="text-center">
+                        <button class="btn-action novelty" onclick="openNovedades('${r.id}')" title="Novedades">
+                            <i class="bi bi-chat-dots"></i>${novedadesCount > 0 ? ` <small>${novedadesCount}</small>` : ''}
+                        </button>
+                    </td>
+                    <td>
+                        <div class="action-group">
+                            <button class="btn-action view" onclick="openDetail('${r.id}')" title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            ${canEdit ? `<button class="btn-action edit" onclick="openEditModal('${r.id}')" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>` : ''}
+                            ${isAdmin ? `<button class="btn-action delete" onclick="openDeleteModal('${r.id}')" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+        });
+
+        tbody.innerHTML = html;
+        info.textContent = `Mostrando ${data.length} requisicion${data.length !== 1 ? 'es' : ''}`;
+    }
+
+    function loadAreas() {
+        const areas = ['Administración','Finanzas','Recursos Humanos','Tecnología','Operaciones','Ventas','Marketing','Logística','Legal','Producción'];
+        const select = document.getElementById('filterArea');
+        select.innerHTML = '<option value="">Todas las áreas</option>';
+        areas.forEach(a => {
+            select.innerHTML += `<option value="${a}">${a}</option>`;
+        });
+    }
+
+    // ============================================================
+    // FILTERS
+    // ============================================================
+    document.getElementById('filterArea')?.addEventListener('change', renderAll);
+    document.getElementById('filterEstado')?.addEventListener('change', renderAll);
+    document.getElementById('filterFechaInicio')?.addEventListener('change', renderAll);
+    document.getElementById('filterFechaFin')?.addEventListener('change', renderAll);
+
+    function clearFilters() {
+        document.getElementById('filterArea').value = '';
+        document.getElementById('filterEstado').value = '';
+        document.getElementById('filterFechaInicio').value = '';
+        document.getElementById('filterFechaFin').value = '';
+        renderAll();
+    }
+
+    // ============================================================
+    // CREATE / EDIT
+    // ============================================================
+    function openCreateModal() {
+        currentEditId = null;
+        document.getElementById('reqModalTitle').textContent = 'Nueva Requisición';
+        document.getElementById('reqForm').reset();
+        document.getElementById('reqId').value = '';
+        document.getElementById('reqSolicitante').value = userProfile.nombre || currentUser.email;
+        document.getElementById('reqArea').value = userProfile.area || '';
+        document.getElementById('reqFechaReq').value = new Date().toISOString().split('T')[0];
+        document.getElementById('fechaRealGroup').classList.add('d-none');
+        document.getElementById('reqFechaReal').removeAttribute('required');
+        document.getElementById('reqEstado').value = 'Pendiente';
+        document.getElementById('estadoGroup').style.display = userProfile.rol === 'admin' ? '' : 'none';
+        document.getElementById('btnSave').innerHTML = '<i class="bi bi-check-lg me-1"></i> Crear';
+
+        const modal = new bootstrap.Modal(document.getElementById('reqModal'));
+        modal.show();
+    }
+
+    function openEditModal(id) {
+        const req = allRequisiciones.find(r => r.id === id);
+        if (!req) return;
+
+        const isAdmin = userProfile.rol === 'admin';
+        if (!isAdmin && req.estado !== 'Pendiente') {
+            showToast('Solo puede editar requisiciones en estado Pendiente', 'error');
+            return;
+        }
+
+        currentEditId = id;
+        document.getElementById('reqModalTitle').textContent = 'Editar Requisición';
+        document.getElementById('reqId').value = id;
+        document.getElementById('reqArea').value = req.area || '';
+        document.getElementById('reqSolicitante').value = req.solicitante || '';
+        document.getElementById('reqDescripcion').value = req.descripcion || '';
+        document.getElementById('reqCantidad').value = req.cantidad || '';
+        document.getElementById('reqFechaReq').value = req.fechaRequerimiento || '';
+        document.getElementById('reqFechaEntrega').value = req.fechaEntregaSolicitada || '';
+        document.getElementById('reqFechaReal').value = req.fechaEntregaReal || '';
+        document.getElementById('reqEstado').value = req.estado || 'Pendiente';
+
+        // Show fecha real if estado is Entregado
+        if (req.estado === 'Entregado') {
+            document.getElementById('fechaRealGroup').classList.remove('d-none');
+            document.getElementById('reqFechaReal').setAttribute('required', 'required');
+        } else {
+            document.getElementById('fechaRealGroup').classList.add('d-none');
+            document.getElementById('reqFechaReal').removeAttribute('required');
+        }
+
+        document.getElementById('estadoGroup').style.display = isAdmin ? '' : 'none';
+        document.getElementById('btnSave').innerHTML = '<i class="bi bi-check-lg me-1"></i> Actualizar';
+
+        const modal = new bootstrap.Modal(document.getElementById('reqModal'));
+        modal.show();
+    }
+
+    // Show/hide fecha real based on estado
+    document.getElementById('reqEstado').addEventListener('change', function() {
+        const isEntregado = this.value === 'Entregado';
+        document.getElementById('fechaRealGroup').classList.toggle('d-none', !isEntregado);
+        if (isEntregado) {
+            document.getElementById('reqFechaReal').setAttribute('required', 'required');
+            if (!document.getElementById('reqFechaReal').value) {
+                document.getElementById('reqFechaReal').value = new Date().toISOString().split('T')[0];
+            }
+        } else {
+            document.getElementById('reqFechaReal').removeAttribute('required');
+        }
+    });
+
+    async function saveRequisicion() {
+        const area = document.getElementById('reqArea').value;
+        const descripcion = document.getElementById('reqDescripcion').value.trim();
+        const cantidad = parseInt(document.getElementById('reqCantidad').value);
+        const fechaReq = document.getElementById('reqFechaReq').value;
+        const fechaEntrega = document.getElementById('reqFechaEntrega').value;
+        const fechaReal = document.getElementById('reqFechaReal').value;
+        const estado = document.getElementById('reqEstado').value;
+
+        if (!area || !descripcion || !cantidad || !fechaReq || !fechaEntrega) {
+            showToast('Complete todos los campos obligatorios', 'error');
+            return;
+        }
+
+        if (estado === 'Entregado' && !fechaReal) {
+            showToast('La fecha de entrega real es obligatoria al marcar como Entregado', 'error');
+            return;
+        }
+
+        const data = {
+            area,
+            solicitante: userProfile.nombre || currentUser.email,
+            solicitanteUid: currentUser.uid,
+            descripcion,
+            cantidad,
+            fechaRequerimiento: fechaReq,
+            fechaEntregaSolicitada: fechaEntrega,
+            fechaEntregaReal: estado === 'Entregado' ? fechaReal : '',
+            estado,
+            actualizado: Date.now()
+        };
+
+        showLoading(true);
+        try {
+            if (currentEditId) {
+                await db.ref('requisiciones/' + currentEditId).update(data);
+                showToast('Requisición actualizada correctamente');
+            } else {
+                data.creado = Date.now();
+                data.novedades = [];
+                await db.ref('requisiciones').push(data);
+                showToast('Requisición creada correctamente');
+            }
+            bootstrap.Modal.getInstance(document.getElementById('reqModal')).hide();
+        } catch (e) {
+            showToast('Error al guardar: ' + e.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ============================================================
+    // CHANGE STATUS (Admin inline)
+    // ============================================================
+    async function changeStatus(id, newStatus) {
+        const req = allRequisiciones.find(r => r.id === id);
+        if (!req) return;
+
+        const update = { estado: newStatus, actualizado: Date.now() };
+
+        if (newStatus === 'Entregado') {
+            update.fechaEntregaReal = new Date().toISOString().split('T')[0];
+        } else {
+            update.fechaEntregaReal = '';
+        }
+
+        // Add novedad for status change
+        const novedad = {
+            usuario: userProfile.nombre || currentUser.email,
+            mensaje: `Estado cambiado de "${req.estado}" a "${newStatus}"`,
+            timestamp: Date.now()
+        };
+
+        showLoading(true);
+        try {
+            const existing = req.novedades || [];
+            update.novedades = [...existing, novedad];
+            await db.ref('requisiciones/' + id).update(update);
+            showToast(`Estado actualizado a "${newStatus}"`);
+        } catch (e) {
+            showToast('Error al cambiar estado: ' + e.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ============================================================
+    // DELETE
+    // ============================================================
+    function openDeleteModal(id) {
+        currentDeleteId = id;
+        const req = allRequisiciones.find(r => r.id === id);
+        document.getElementById('deleteReqRef').textContent = req ? `#${req.area} - ${req.descripcion}` : '';
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    async function confirmDelete() {
+        if (!currentDeleteId) return;
+        showLoading(true);
+        try {
+            await db.ref('requisiciones/' + currentDeleteId).remove();
+            showToast('Requisición eliminada');
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+        } catch (e) {
+            showToast('Error al eliminar: ' + e.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ============================================================
+    // DETAIL VIEW
+    // ============================================================
+    function openDetail(id) {
+        const r = allRequisiciones.find(x => x.id === id);
+        if (!r) return;
+
+        const delayed = r.retrasado;
+        let delayedBadge = '';
+        if (delayed) {
+            delayedBadge = `<span class="badge-status badge-retrasado"><i class="bi bi-exclamation-triangle me-1"></i>Retrasado</span>`;
+        }
+
+        let html = `
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Área</small>
+                        <strong>${escHtml(r.area)}</strong>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Solicitante</small>
+                        <strong>${escHtml(r.solicitante)}</strong>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Cantidad</small>
+                        <strong>${r.cantidad}</strong>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Estado</small>
+                        <span class="badge-status ${getBadgeClass(r.estado)}">${r.estado}</span> ${delayedBadge}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Fecha de Requerimiento</small>
+                        <strong>${formatDate(r.fechaRequerimiento)}</strong>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Fecha de Entrega Solicitada</small>
+                        <strong>${formatDate(r.fechaEntregaSolicitada)}</strong>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Fecha de Entrega Real</small>
+                        <strong>${formatDate(r.fechaEntregaReal)}</strong>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Descripción</small>
+                        <p class="mb-0">${escHtml(r.descripcion)}</p>
+                    </div>
+                </div>
+            </div>`;
+
+        // Novedades
+        const novedades = r.novedades || [];
+        if (novedades.length > 0) {
+            html += `<hr><h6 class="fw-bold"><i class="bi bi-chat-dots me-1"></i> Historial de Novedades (${novedades.length})</h6>`;
+            html += '<div style="max-height:250px;overflow-y:auto;">';
+            novedades.slice().reverse().forEach(n => {
+                const color = getAvatarColor(n.usuario);
+                html += `
+                    <div class="novedad-item">
+                        <div class="novedad-avatar" style="background:${color}">${getInitials(n.usuario)}</div>
+                        <div class="novedad-content">
+                            <div class="novedad-meta">${escHtml(n.usuario)} · ${formatDateTime(n.timestamp)}</div>
+                            <div class="novedad-msg">${escHtml(n.mensaje)}</div>
+                        </div>
+                    </div>`;
+            });
+            html += '</div>';
+        }
+
+        document.getElementById('detailBody').innerHTML = html;
+        new bootstrap.Modal(document.getElementById('detailModal')).show();
+    }
+
+    // ============================================================
+    // NOVEDADES
+    // ============================================================
+    function openNovedades(id) {
+        currentNovedadId = id;
+        const r = allRequisiciones.find(x => x.id === id);
+        if (!r) return;
+
+        const novedades = r.novedades || [];
+        const container = document.getElementById('novedadesList');
+
+        if (novedades.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-chat"></i><br><small>No hay novedades registradas</small></div>';
+        } else {
+            let html = '';
+            novedades.slice().reverse().forEach(n => {
+                const color = getAvatarColor(n.usuario);
+                html += `
+                    <div class="novedad-item">
+                        <div class="novedad-avatar" style="background:${color}">${getInitials(n.usuario)}</div>
+                        <div class="novedad-content">
+                            <div class="novedad-meta">${escHtml(n.usuario)} · ${formatDateTime(n.timestamp)}</div>
+                            <div class="novedad-msg">${escHtml(n.mensaje)}</div>
+                        </div>
+                    </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        document.getElementById('novedadMensaje').value = '';
+        new bootstrap.Modal(document.getElementById('novedadModal')).show();
+    }
+
+    async function addNovedad() {
+        const msg = document.getElementById('novedadMensaje').value.trim();
+        if (!msg) {
+            showToast('Escriba un mensaje', 'error');
+            return;
+        }
+        if (!currentNovedadId) return;
+
+        const req = allRequisiciones.find(r => r.id === currentNovedadId);
+        if (!req) return;
+
+        const novedad = {
+            usuario: userProfile.nombre || currentUser.email,
+            mensaje: msg,
+            timestamp: Date.now()
+        };
+
+        showLoading(true);
+        try {
+            const existing = req.novedades || [];
+            await db.ref('requisiciones/' + currentNovedadId + '/novedades').set([...existing, novedad]);
+            document.getElementById('novedadMensaje').value = '';
+            showToast('Novedad agregada');
+        } catch (e) {
+            showToast('Error al agregar novedad: ' + e.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Enter to send novedad
+    document.getElementById('novedadMensaje').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            addNovedad();
+        }
+    });
+</script>
+
+</body>
+</html>
